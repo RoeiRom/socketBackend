@@ -1,29 +1,18 @@
 const express = require('express');
-const { default: pgPubsub} = require('@graphile/pg-pubsub');
-const { makePluginHook, postgraphile } = require('postgraphile');
-const ConnectionPluginFilter = require('postgraphile-plugin-connection-filter');
-
 const app = express();
+const server = require('http').createServer(app);
+const io = require('socket.io')(server);
+const port = 8080;
 
-const pluginHook = makePluginHook([pgPubsub]);
+server.listen(port, () => {
+  console.log('Server listening at port %d', port);
+});
 
-app.use(
-    postgraphile('postgres://postgres:R159123147r!@localhost:5432/postgres', 'public', {
-        watchPg: true, 
-        graphiql: true,
-        enableCors: true,
-        enhanceGraphiql: true, 
-        pluginHook,
-        appendPlugins: [ConnectionPluginFilter],
-        graphileBuildOptions: {
-            connectionFilterRelations: true
-        },
-        subscriptions: true,
-        simpleSubscriptions: true,
-        websocketMiddlewares: []
+io.on('connection', (socket) => {
+    console.log('socket: ', socket.id, 'connected!');
+
+    socket.on('send', (message) => {
+        console.log('message is: ', message)
+        io.emit('message', message)
     })
-);
-
-app.listen(8080, () => {
-    console.log('app started!')
 });
